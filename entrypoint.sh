@@ -59,6 +59,7 @@ fi
 # Set DNS server
 echo "nameserver ${SUBSPACE_NAMESERVER}" >/etc/resolv.conf
 
+if [ -z "${SUBSPACE_IPTABLES_DISABLED-}" ] ; then
 # ipv4
 if ! /sbin/iptables -t nat --check POSTROUTING -s ${SUBSPACE_IPV4_POOL} -j MASQUERADE ; then
     /sbin/iptables -t nat --append POSTROUTING -s ${SUBSPACE_IPV4_POOL} -j MASQUERADE
@@ -106,6 +107,10 @@ if ! /sbin/ip6tables --wait -t nat --check OUTPUT -s ${SUBSPACE_IPV6_POOL} -p tc
     /sbin/ip6tables --wait -t nat --append OUTPUT -s ${SUBSPACE_IPV6_POOL} -p tcp --dport 53 -j DNAT --to ${SUBSPACE_IPV6_GW}
 fi
 
+else
+  echo "Iptables rules disabled"
+fi
+
 #
 # WireGuard (${SUBSPACE_IPV4_POOL})
 #
@@ -142,6 +147,8 @@ wg setconf wg0 /data/wireguard/server.conf
 ip link set wg0 up
 
 
+if [ -z "${SUBSPACE_DNSMASQ_DISABLED-}" ] ; then
+
 # dnsmasq service
 if ! test -d /etc/sv/dnsmasq ; then
     cat <<DNSMASQ >/etc/dnsmasq.conf
@@ -171,6 +178,10 @@ exec svlogd -tt ./main
 RUNIT
     chmod +x /etc/sv/dnsmasq/log/run
     ln -s /etc/sv/dnsmasq /etc/service/dnsmasq
+fi
+
+else
+  echo "DNSMASQ disabled"
 fi
 
 # subspace service
