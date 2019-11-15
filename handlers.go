@@ -402,6 +402,18 @@ func profileAddHandler(w *Web) {
 	if port := getEnv("SUBSPACE_LISTENPORT", "nil"); port != "nil" {
 		listenport = port
 	}
+	allowedIps := "0.0.0.0/0, ::/0"
+	if allowed := getEnv("SUBSPACE_ALLOWED_IPS", "nil"); allowed != "nil" {
+		allowedIps = allowed
+	}
+	dns := ipv4Gw + ", " + ipv6Gw
+	if dnslist := getEnv("SUBSPACE_DNS", "nil"); dnslist != "nil" {
+	        dns = dnslist
+	}
+
+
+
+
 
 	script := `
 cd {{$.Datadir}}/wireguard
@@ -419,13 +431,13 @@ WGPEER
 cat <<WGCLIENT >clients/{{$.Profile.ID}}.conf
 [Interface]
 PrivateKey = ${wg_private_key}
-DNS = {{$.IPv4Gw}}, {{$.IPv6Gw}}
+DNS = {{$.Dns}}
 Address = {{$.IPv4Pref}}{{$.Profile.Number}}/{{$.IPv4Cidr}},{{$.IPv6Pref}}{{$.Profile.Number}}/{{$.IPv6Cidr}}
 
 [Peer]
 PublicKey = $(cat server.public)
 Endpoint = {{$.Domain}}:{{$.Listenport}}
-AllowedIPs = 0.0.0.0/0, ::/0
+AllowedIPs = {{$.AllowedIps}}
 WGCLIENT
 `
 	_, err = bash(script, struct {
@@ -439,6 +451,8 @@ WGCLIENT
 		IPv4Cidr string
     IPv6Cidr string
 		Listenport string
+		AllowedIps string
+		Dns string
 	}{
 		profile,
 		httpHost,
@@ -448,8 +462,10 @@ WGCLIENT
 		ipv4Pref,
 		ipv6Pref,
 		ipv4Cidr,
-    ipv6Cidr,
+                ipv6Cidr,
 		listenport,
+		allowedIps,
+		dns,
 	})
 	if err != nil {
 		logger.Warn(err)

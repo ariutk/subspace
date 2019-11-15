@@ -24,6 +24,13 @@ if [ -z "${SUBSPACE_NAMESERVER-}" ] ; then
     export SUBSPACE_NAMESERVER="1.1.1.1"
 fi
 
+if [ -z "${SUBSPACE_DNS-}" ] ; then
+    export SUBSPACE_DNS=""
+fi
+if [ -z "${SUBSPACE_ALLOWED_IPS-}" ] ; then
+    export SUBSPACE_ALLOWED_IPS="0.0.0.0/0"
+fi
+
 if [ -z "${SUBSPACE_LETSENCRYPT-}" ] ; then
     export SUBSPACE_LETSENCRYPT="true"
 fi
